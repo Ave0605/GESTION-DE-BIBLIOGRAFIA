@@ -121,7 +121,7 @@
     const subjectIdnumerico = parseInt(req.params.subjectId, 10)
     try {
       ///////////////////////VALIDACION LOCAL
-      if (!subjectIdnumerico|| isNaN(elemento)) {
+      if (!subjectIdnumerico|| isNaN(subjectIdnumerico)) {
         throw new Error("FALTA ID");
       }
   
@@ -142,14 +142,14 @@
 
       //////////////////////////////
       /*VARIABLES PARA EVITAR ERROR AL MANTENER NOMBRE Y CAMABIAR FACULTYID*/
-      const nombreoriginalmateria = await conexion.query("select nombre from materia where idmateria=$1",[elemento])
-      const existenciamateria = await conexion.query("select * from materia where nombre = $1",[req.body.name])
+      const datosoriginales = await conexion.query("select nombre from materia where idmateria=$1",[subjectIdnumerico])
+      const duplicadomateria = await conexion.query("select * from materia where nombre = $1",[req.body.name])
       //////////////////////////////////
 
       ////////////////////////////////////
       /*ERROR SI YA EXISTE UNA MATERIA CON EL MISMO NOMBRE.
       EXCEPCION: SE IGNORA EL ERROR SI EL NOMBRE DEL ID ES EL MISMO QUE EL DE REQ.BODY.NAME, SE ENTIENDE QUE SE MANTIENE EL NOMBRE Y SE CAMBIA EL FACULTYID*/
-      if (existenciamateria.rowCount>0 && (nombreoriginalmateria.rows[0].nombre != existenciamateria.rows[0].nombre)) {
+      if (duplicadomateria.rowCount>0 && (datosoriginales.rows[0].nombre != duplicadomateria.rows[0].nombre)) {
        await  conexion.end()
        throw new Error("MATERIA YA EXISTE")
       }
@@ -165,7 +165,7 @@
 
 
       /////////////////////////////////SE ACTUALIZA EL REGISTRO
-      const sqlres = await conexion.query("update materia set nombre = $1, idfacultad = $2 where idmateria= $3 RETURNING *" ,[req.body.name, req.body.facultyId, elemento])
+      const sqlres = await conexion.query("update materia set nombre = $1, idfacultad = $2 where idmateria= $3 RETURNING *" ,[req.body.name, req.body.facultyId, subjectIdnumerico])
       res.status(200).json({
         status: "actualizado",
         results: sqlres.rowCount,
@@ -192,7 +192,7 @@
     let conexion
     try {
       //////////////////VALIDACION LOCAL
-      if (!subjectIdnumerico || isNaN(elemento))  {
+      if (!subjectIdnumerico || isNaN(subjectIdnumerico))  {
         throw new Error("ID FALTANTE");
       }
       //////////////////////////////////////
