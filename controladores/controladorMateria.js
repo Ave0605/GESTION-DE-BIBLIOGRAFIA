@@ -69,7 +69,6 @@
 
     try {
       ////////////////////VALIDACION LOCAL
-       conexion = await conectar()
       if (!req.body.name) {
         throw new Error("NAME IS MISSING");
       }
@@ -142,14 +141,14 @@
 
       //////////////////////////////
       /*VARIABLES PARA EVITAR ERROR AL MANTENER NOMBRE Y CAMABIAR FACULTYID*/
-      const datosoriginales = await conexion.query("select nombre from materia where idmateria=$1",[subjectIdnumerico])
+      const datosoriginales = await conexion.query("select * from materia where idmateria=$1",[subjectIdnumerico])
       const duplicadomateria = await conexion.query("select * from materia where nombre = $1",[req.body.name])
       //////////////////////////////////
 
       ////////////////////////////////////
       /*ERROR SI YA EXISTE UNA MATERIA CON EL MISMO NOMBRE.
       EXCEPCION: SE IGNORA EL ERROR SI EL NOMBRE DEL ID ES EL MISMO QUE EL DE REQ.BODY.NAME, SE ENTIENDE QUE SE MANTIENE EL NOMBRE Y SE CAMBIA EL FACULTYID*/
-      if (duplicadomateria.rowCount>0 && (datosoriginales.rows[0].nombre != duplicadomateria.rows[0].nombre)) {
+      if (duplicadomateria.rowCount>0 && (datosoriginales.rows[0].idmateria != duplicadomateria.rows[0].idmateria)) {
        await  conexion.end()
        throw new Error("MATERIA YA EXISTE")
       }
@@ -225,3 +224,38 @@
     }
   }
   //////////////////////////////////////////////
+
+  //////////////////DELETE ALL
+exports.deleteAll = async(req, res) =>{
+  const subjectIdnumerico = parseInt(req.params.subjectId, 10)
+  let conexion
+  try {
+    if (!subjectIdnumerico || isNaN(subjectIdnumerico))  {
+      throw new Error("ID FALTANTE");
+    }
+
+    conexion = await conectar()
+    const sqlres = await conexion.query("select * from materia where idmateria = $1",[subjectIdnumerico])
+    if(sqlres.rowCount===0){throw new Error("MATERIA NO EXISTE")} ///VALIDAR EXISTENCIA ID MATERIA A ELIMINAR Y LANZAR ERROR
+    const sqldeleteforce0 = await conexion.query("delete from bibliografia where idmateria= $1 RETURNING *", [subjectIdnumerico])
+    const sqldeleteforce1 = await conexion.query("delete from materia where idmateria=$1 RETURNING *", [subjectIdnumerico])
+    await conexion.end()
+
+    res.status(200).json({
+      status: "eliminado",
+      results: (sqldeleteforce0.rowCount + sqldeleteforce1.rowCount),
+      data: {
+        deletedBibliografia: sqldeleteforce0.rows,
+        deletedMateria: sqldeleteforce1.rows
+      }
+    });
+
+  } catch (error) {
+    if(conexion){
+      await conexion.end()
+    }
+    res.status(400);
+    res.send({ Mensaje: error.message });
+  }
+
+}

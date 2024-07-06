@@ -6,7 +6,7 @@ const cors = require("cors"); // Import the cors package
 const rutasFacultad = require("./rutas/rutasfacultad");
 const rutasMateria = require("./rutas/rutasmateria");
 const rutasMaterial = require("./rutas/rutasmaterial");
-
+const rutasBibliografia = require("./rutas/rutasbibliografia")
 
 // Define the CORS options
 const corsOptions = {
@@ -37,4 +37,6 @@ app.listen(port, () => {
 app.use("/facultad", rutasFacultad);
 app.use("/materia", rutasMateria);
 app.use("/material", rutasMaterial);
+app.use("/bibliografia", rutasBibliografia);
+
 

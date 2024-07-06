@@ -16,4 +16,9 @@ router
   .patch(controladorMaterial.updateOne)
   .delete(controladorMaterial.deleteOne);
 
+  router
+  .route("/force/:materialId")
+  .delete(controladorMaterial.deleteAll)
+ 
+
 module.exports = router;

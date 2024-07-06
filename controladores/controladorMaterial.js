@@ -60,7 +60,6 @@ exports.createOne = async(req, res) =>{
 
     try {
       ////////////////////VALIDACION LOCAL
-       conexion = await conectar()
       if (!req.body.title) {
         throw new Error("TITLE IS MISSING");
       }
@@ -261,4 +260,38 @@ if (tituloautorduplicado.rowCount>0 && tituloautorduplicado.rows[0].idmaterial !
       }
   
     }
+}
+
+exports.deleteAll = async(req, res) =>{
+  const materialIdnumerico = parseInt(req.params.materialId, 10)
+  let conexion
+  try {
+    if (!materialIdnumerico || isNaN(materialIdnumerico))  {
+      throw new Error("ID FALTANTE");
+    }
+
+    conexion = await conectar()
+    const sqlres = await conexion.query("select * from material where idmaterial = $1",[materialIdnumerico])
+    if(sqlres.rowCount===0){throw new Error("MATERIA NO EXISTE")} ///VALIDAR EXISTENCIA ID MATERIAL A ELIMINAR Y LANZAR ERROR
+    const sqldeleteforce0 = await conexion.query("delete from bibliografia where idmaterial= $1 RETURNING *", [materialIdnumerico])
+    const sqldeleteforce1 = await conexion.query("delete from material where idmaterial=$1 RETURNING *", [materialIdnumerico])
+    await conexion.end()
+
+    res.status(200).json({
+      status: "eliminado",
+      results: (sqldeleteforce0.rowCount + sqldeleteforce1.rowCount),
+      data: {
+        deletedBibliografia: sqldeleteforce0.rows,
+        deletedMaterial: sqldeleteforce1.rows
+      }
+    });
+
+  } catch (error) {
+    if(conexion){
+      await conexion.end()
+    }
+    res.status(400);
+    res.send({ Mensaje: error.message });
+  }
+
 }
