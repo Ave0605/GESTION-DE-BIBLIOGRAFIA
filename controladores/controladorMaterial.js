@@ -69,11 +69,11 @@ exports.createOne = async(req, res) =>{
       }
 
       if (!req.body.author) {
-        throw new Error("TITLE IS MISSING");
+        throw new Error("author IS MISSING");
       }
   
       if (req.body.author.trim() === "") {
-        throw new Error("TITLE IS EMPTY");
+        throw new Error("author IS EMPTY");
       }
 
       if (!req.body.url) {
@@ -193,11 +193,11 @@ exports.updateOne = async(req, res) =>{
       }
 
       if (!req.body.author) {
-        throw new Error("TITLE IS MISSING");
+        throw new Error("author IS MISSING");
       }
   
-      if (req.body.author.trim() === "") {
-        throw new Error("TITLE IS EMPTY");
+      if (req.body.author.trim() === "")a {
+        throw new Error("author IS EMPTY");
       }
 
       if (!req.body.url) {
