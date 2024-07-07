@@ -178,16 +178,23 @@ exports.deleteOne = async (req, res) => {
     if (existencia.rowCount === 0){
       await conexion.end()
       throw new Error ("ID NO EXISTE")
+      
+    }
 
-    }else{
-      const sqldelete = await conexion.query("delete from facultad where idfacultad=$1 RETURNING *", [facultyIdnumerico]) //////////ELIMINAR Y RETORNAR DATOS
+    const existenciamateria = await conexion.query("select * from materia where idfacultad=$1",[facultyIdnumerico])
+    if(existenciamateria.rowCount>0){
+      await conexion.end()
+      throw new Error("FACULTAD NO PUEDE SER ELIMINADA PORQUE TIENE MATERIAS")
+    }
+
+    const sqldelete = await conexion.query("delete from facultad where idfacultad=$1 RETURNING *", [facultyIdnumerico]) //////////ELIMINAR Y RETORNAR DATOS
       await conexion.end()
       res.status(200).json({
         status: "eliminado",
         results: sqldelete.rowCount,
         data: sqldelete.rows[0]
       });
-    }
+    
 
  
   } catch (error) {
@@ -211,19 +218,21 @@ exports.deleteAll = async(req, res) =>{
 
     conexion = await conectar()
     const sqlres = await conexion.query("select * from facultad where idfacultad = $1",[facultyIdnumerico])
-    if(sqlres.rowCount===0){throw new Error("FACULTAD NO EXISTE")} ///VALIDAR EXISTENCIA ID FACULTAD A ELIMINAR Y LANZAR ERROR
-    const sqldeleteforce0 = await conexion.query("DELETE from bibliografia where idmateria in (select idmateria from materia where idfacultad = $1 )RETURNING *", [facultyIdnumerico])
-    const sqldeleteforce1 = await conexion.query("delete from materia where idfacultad=$1 RETURNING *", [facultyIdnumerico])
-    const sqldeletefaculty = await conexion.query("delete from facultad where idfacultad=$1 RETURNING *",[facultyIdnumerico])
+    if(sqlres.rowCount===0){
+      await conexion.end()
+      throw new Error("FACULTAD NO EXISTE")
+    } ///VALIDAR EXISTENCIA ID FACULTAD A ELIMINAR Y LANZAR ERROR
+ 
+    const updatematerias = await conexion.query("update materia set idfacultad = 9999 where idfacultad = $1 RETURNING *", [facultyIdnumerico])
+    const deletefacultad = await conexion.query("delete from facultad where idfacultad = $1 RETURNING *",[facultyIdnumerico])
     await conexion.end()
 
     res.status(200).json({
       status: "eliminado",
-      results: (sqldeleteforce0.rowCount + sqldeleteforce1.rowCount + sqldeletefaculty.rowCount),
+      results: (updatematerias.rowCount + deletefacultad.rowCount),
       data: {
-        deletedBibliografia: sqldeleteforce0.rows,
-        deletedMateria: sqldeleteforce1.rows,
-        deletedFacultad: sqldeletefaculty.rows
+        updatematerias: updatematerias.rows,
+        deletedFacultad: deletefacultad.rows
       }
     });
 

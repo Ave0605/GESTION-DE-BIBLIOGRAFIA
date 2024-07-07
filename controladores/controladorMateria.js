@@ -205,7 +205,13 @@
         await conexion.end()
         throw new Error ("ID NO EXISTE")
   
-      }else{
+      }
+
+      const existenciabibliografia = await conexion.query("select * from bibliografia where idmateria = $1",[subjectIdnumerico])
+      if (existenciabibliografia.rowCount>0) {
+        await conexion.end()
+        throw new Error("MATERIA NO PUEDE SER ELIMINADA PORQUE TIENE BIBLIOGRAFIA")
+      }
         sqldelete = await conexion.query("delete from materia where idmateria=$1 RETURNING *", [subjectIdnumerico]) //////SE ELIMINA Y RETORNAN DATOS
         await conexion.end()
         res.status(200).json({
@@ -213,7 +219,7 @@
           results: sqldelete.rowCount,
           data: sqldelete.rows[0]
         });
-      }
+      
 
     } catch (error) {
       if(conexion){
@@ -227,7 +233,7 @@
 
   //////////////////DELETE ALL
 exports.deleteAll = async(req, res) =>{
-  const subjectIdnumerico = parseInt(req.params.subjectId, 10)
+ /* const subjectIdnumerico = parseInt(req.params.subjectId, 10)
   let conexion
   try {
     if (!subjectIdnumerico || isNaN(subjectIdnumerico))  {
@@ -256,6 +262,6 @@ exports.deleteAll = async(req, res) =>{
     }
     res.status(400);
     res.send({ Mensaje: error.message });
-  }
+  }*/
 
 }

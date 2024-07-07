@@ -155,7 +155,15 @@ exports.deleteOne = async(req, res) =>{
         await conexion.end()
         throw new Error ("ID NO EXISTE")
   
-      }else{
+      }
+      const existenciabibliografia = await conexion.query("select * from bibliografia where idmaterial = $1",[materialIdnumerico])
+      if (existenciabibliografia.rowCount>0) {
+        await conexion.end()
+        throw new Error("MATERIA NO PUEDE SER ELIMINADA PORQUE TIENE BIBLIOGRAFIA")
+      }
+
+
+
         sqldelete = await conexion.query("delete from material where idmaterial=$1 RETURNING *", [materialIdnumerico]) //////SE ELIMINA Y RETORNAN DATOS
         await conexion.end()
         res.status(200).json({
@@ -163,7 +171,7 @@ exports.deleteOne = async(req, res) =>{
           results: sqldelete.rowCount,
           data: sqldelete.rows[0]
         });
-      }
+      
 
     } catch (error) {
       if(conexion){
@@ -196,7 +204,7 @@ exports.updateOne = async(req, res) =>{
         throw new Error("author IS MISSING");
       }
   
-      if (req.body.author.trim() === "")a {
+      if (req.body.author.trim() === "") {
         throw new Error("author IS EMPTY");
       }
 
@@ -263,7 +271,7 @@ if (tituloautorduplicado.rowCount>0 && tituloautorduplicado.rows[0].idmaterial !
 }
 
 exports.deleteAll = async(req, res) =>{
-  const materialIdnumerico = parseInt(req.params.materialId, 10)
+  /*const materialIdnumerico = parseInt(req.params.materialId, 10)
   let conexion
   try {
     if (!materialIdnumerico || isNaN(materialIdnumerico))  {
@@ -293,5 +301,5 @@ exports.deleteAll = async(req, res) =>{
     res.status(400);
     res.send({ Mensaje: error.message });
   }
-
+*/
 }
