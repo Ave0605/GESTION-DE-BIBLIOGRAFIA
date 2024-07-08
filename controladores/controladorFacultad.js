@@ -182,9 +182,13 @@ exports.deleteOne = async (req, res) => {
     }
 
     const existenciamateria = await conexion.query("select * from materia where idfacultad=$1",[facultyIdnumerico])
-    if(existenciamateria.rowCount>0){
-      await conexion.end()
-      throw new Error("FACULTAD NO PUEDE SER ELIMINADA PORQUE TIENE MATERIAS")
+    if (existenciamateria.rowCount > 0) {
+      await conexion.end();
+      const err = new Error(
+        "FACULTAD NO PUEDE SER ELIMINADA PORQUE TIENE MATERIAS",
+      );
+      err.code = "FACULTAD_CON_MATERIAS";
+      throw err;
     }
 
     const sqldelete = await conexion.query("delete from facultad where idfacultad=$1 RETURNING *", [facultyIdnumerico]) //////////ELIMINAR Y RETORNAR DATOS
@@ -201,8 +205,12 @@ exports.deleteOne = async (req, res) => {
     if(conexion){
       await conexion.end()
     }
-    res.status(400);
-    res.send({ Mensaje: error.message });
+    if (error.code === "FACULTAD_CON_MATERIAS") {
+      res.status(409);
+    } else {
+      res.status(400);
+    }
+
   }
 };
 ////////////////////////////////////////////////////////////////
