@@ -208,10 +208,15 @@
       }
 
       const existenciabibliografia = await conexion.query("select * from bibliografia where idmateria = $1",[subjectIdnumerico])
-      if (existenciabibliografia.rowCount>0) {
-        await conexion.end()
-        throw new Error("MATERIA NO PUEDE SER ELIMINADA PORQUE TIENE BIBLIOGRAFIA")
+      if (existenciabibliografia.rowCount > 0) {
+        await conexion.end();
+        const err = new Error(
+          "MATERIA NO PUEDE SER ELIMINADA PORQUE TIENE BIBLIOGRAFIA",
+        );
+        err.code = "ERROR_MATERIA_CON_BIBLIOGRAFIA";
+        throw err;
       }
+
         sqldelete = await conexion.query("delete from materia where idmateria=$1 RETURNING *", [subjectIdnumerico]) //////SE ELIMINA Y RETORNAN DATOS
         await conexion.end()
         res.status(200).json({
@@ -225,8 +230,11 @@
       if(conexion){
         await conexion.end()
       }
-      res.status(400);
-      res.send({ Mensaje: error.message });
+      if (error.code === "ERROR_MATERIA_CON_BIBLIOGRAFIA") {
+        res.status(409);
+      } else {
+        res.status(400);
+      }
     }
   }
   //////////////////////////////////////////////
