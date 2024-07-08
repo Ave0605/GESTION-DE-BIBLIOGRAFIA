@@ -157,10 +157,15 @@ exports.deleteOne = async(req, res) =>{
   
       }
       const existenciabibliografia = await conexion.query("select * from bibliografia where idmaterial = $1",[materialIdnumerico])
-      if (existenciabibliografia.rowCount>0) {
-        await conexion.end()
-        throw new Error("MATERIA NO PUEDE SER ELIMINADA PORQUE TIENE BIBLIOGRAFIA")
+    if (existenciabibliografia.rowCount > 0) {
+          await conexion.end();
+          const err = new Error(
+            "MATERIAL NO PUEDE SER ELIMINADA PORQUE TIENE BIBLIOGRAFIA",
+          );
+          err.code = "ERROR_MATERIAL_CON_BIBLIOGRAFIA";
+          throw err;
       }
+
 
 
 
@@ -177,8 +182,12 @@ exports.deleteOne = async(req, res) =>{
       if(conexion){
         await conexion.end()
       }
-      res.status(400);
-      res.send({ Mensaje: error.message });
+        if (error.code === "ERROR_MATERIAL_CON_BIBLIOGRAFIA") {
+          res.status(409);
+        } else {
+          res.status(400);
+        }
+        res.send({ Mensaje: error.message });
     }
 }
 
