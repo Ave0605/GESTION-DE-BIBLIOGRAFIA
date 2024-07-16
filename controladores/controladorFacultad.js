@@ -9,7 +9,9 @@ exports.getAll = async (req, res) => {
 
     conexion = await conectar()
 
-    const sqlres = await conexion.query('select * from facultad')
+    const sqlres = await conexion.query(`SELECT *
+FROM facultad
+WHERE idfacultad <> 9999`)
   
 
 
@@ -183,21 +185,35 @@ exports.deleteOne = async (req, res) => {
 
     const existenciamateria = await conexion.query("select * from materia where idfacultad=$1",[facultyIdnumerico])
     if (existenciamateria.rowCount > 0) {
+      const updatematerias = await conexion.query("update materia set idfacultad = 9999 where idfacultad = $1 RETURNING *", [facultyIdnumerico])
+      const deletefacultad = await conexion.query("delete from facultad where idfacultad = $1 RETURNING *",[facultyIdnumerico])
+
       await conexion.end();
-      const err = new Error(
+      /*const err = new Error(
         "FACULTAD NO PUEDE SER ELIMINADA PORQUE TIENE MATERIAS",
       );
       err.code = "FACULTAD_CON_MATERIAS";
-      throw err;
-    }
+      throw err;*/
 
-    const sqldelete = await conexion.query("delete from facultad where idfacultad=$1 RETURNING *", [facultyIdnumerico]) //////////ELIMINAR Y RETORNAR DATOS
+      res.status(200).json({
+        status: "eliminado",
+        results: (updatematerias.rowCount + deletefacultad.rowCount),
+        data: {
+          updatematerias: updatematerias.rows,
+          deletedFacultad: deletefacultad.rows
+        }
+      });
+
+
+    }else{const sqldelete = await conexion.query("delete from facultad where idfacultad=$1 RETURNING *", [facultyIdnumerico]) //////////ELIMINAR Y RETORNAR DATOS
       await conexion.end()
       res.status(200).json({
         status: "eliminado",
         results: sqldelete.rowCount,
         data: sqldelete.rows[0]
-      });
+      });}
+
+    
     
 
  
@@ -210,6 +226,7 @@ exports.deleteOne = async (req, res) => {
     } else {
       res.status(400);
     }
+    res.send({ Mensaje: error.message });
 
   }
 };

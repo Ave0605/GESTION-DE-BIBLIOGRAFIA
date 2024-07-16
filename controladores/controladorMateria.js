@@ -235,6 +235,7 @@
       } else {
         res.status(400);
       }
+      res.send({ Mensaje: error.message });
     }
   }
   //////////////////////////////////////////////
